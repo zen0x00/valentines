@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Never Gonna Give You Up</title>
+    <style>
+        html,body{height:100%;margin:0;background:#000;color:#fff}
+        .video-wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000}
+        video{width:100%;height:100%;object-fit:cover;background:#000}
+        .overlay-play{position:fixed;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+        .play-btn{pointer-events:auto;background:rgba(0,0,0,0.6);border:2px solid #fff;color:#fff;padding:14px 20px;border-radius:12px;font-size:18px;text-decoration:none}
+    </style>
+</head>
+<body>
+    <div class="video-wrap">
+        <video id="video" src="assets/rickroll.mp4" playsinline webkit-playsinline controls></video>
+        <div class="overlay-play" id="overlay">
+            <button class="play-btn" id="playBtn">Play Video</button>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const overlay = document.getElementById('overlay');
+        const playBtn = document.getElementById('playBtn');
+
+        function enterFullscreen() {
+            const el = video;
+            if (el.requestFullscreen) return el.requestFullscreen();
+            if (el.webkitEnterFullscreen) return el.webkitEnterFullscreen();
+            if (el.webkitRequestFullscreen) return el.webkitRequestFullscreen();
+        }
+
+        function tryPlay(unmuteIfMuted = false) {
+            return video.play().then(() => {
+                return enterFullscreen().catch(()=>{});
+            }).catch((err) => {
+                // If autoplay with sound is blocked, try muted autoplay
+                if (!video.muted) {
+                    video.muted = true;
+                    return video.play().then(() => enterFullscreen().catch(()=>{}));
+                }
+                return Promise.reject(err);
+            });
+        }
+
+        // Attempt to autoplay and fullscreen on load (user gesture from opener may permit this)
+        document.addEventListener('DOMContentLoaded', () => {
+            tryPlay().then(()=>{
+                // Hide overlay on success
+                overlay.style.display = 'none';
+            }).catch(()=>{
+                // Keep overlay visible so user can explicitly start playback
+                overlay.style.display = 'flex';
+            });
+        });
+
+        // Play button fallback: unmute and play with fullscreen
+        playBtn.addEventListener('click', async () => {
+            try {
+                video.muted = false;
+                await tryPlay(true);
+            } catch (e) {
+                // If still fails, ensure video plays (possibly muted) and hide overlay
+                try { await video.play(); } catch {}
+            } finally {
+                overlay.style.display = 'none';
+            }
+        });
+
+        // If user clicks anywhere on the page, try to play/unmute and go fullscreen
+        document.addEventListener('click', async () => {
+            if (video.paused) {
+                try { await video.play(); } catch {}
+            }
+            try { await enterFullscreen(); } catch {}
+        }, { once: true });
+    </script>
+</body>
+</html>

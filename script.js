@@ -191,8 +191,21 @@ function onTitleComplete() {
 // ===== Continue Button Handler =====
 elements.continueBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    transitionToMessage();
+    openRickrollAndContinue();
 });
+
+function openRickrollAndContinue() {
+    // Open the local rickroll page in a new tab (user-initiated click)
+    try {
+        window.open('rickroll.html', '_blank', 'noopener,noreferrer');
+    } catch (err) {
+        // Fallback to navigating in the same tab if popup is blocked
+        window.location.href = 'rickroll.html';
+    }
+
+    // Also transition the current page to the message section
+    transitionToMessage();
+}
 
 function transitionToMessage() {
     if (!state.titleTypingComplete) return;
